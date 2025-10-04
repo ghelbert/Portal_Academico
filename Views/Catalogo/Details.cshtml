@@ -1,0 +1,30 @@
+@model Portal_Academico.Models.Curso
+
+<h1>Detalle del curso</h1>
+
+<table class="table">
+    <tr><th>Código</th><td>@Model.Codigo</td></tr>
+    <tr><th>Nombre</th><td>@Model.Nombre</td></tr>
+    <tr><th>Créditos</th><td>@Model.Creditos</td></tr>
+    <tr><th>Cupo Máximo</th><td>@Model.CupoMaximo</td></tr>
+    <tr><th>Horario</th><td>@Model.HorarioInicio - @Model.HorarioFin</td></tr>
+</table>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+@* El botón se muestra siempre; la validación server-side evitará duplicados y cupo excedido. *@
+<form asp-controller="Catalogo" asp-action="Inscribirse" method="post">
+    <input type="hidden" name="id" value="@Model.Id" />
+    <button type="submit" class="btn btn-primary">Inscribirse</button>
+    @Html.AntiForgeryToken()
+</form>
+
+<a asp-controller="Catalogo" asp-action="Index" class="btn btn-link">Volver al catálogo</a>
