@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using Portal_Academico.Data;
 using Portal_Academico.Models;
 
@@ -10,11 +11,13 @@ public class CatalogoController : Controller
     private readonly ILogger<CatalogoController> _logger;
 
     private readonly AppDbContext _dbContext; // Contexto de la base de datos
+    private readonly Microsoft.AspNetCore.Identity.UserManager<Portal_Academico.Models.Usuario> _userManager;
 
-    public CatalogoController(ILogger<CatalogoController> logger, AppDbContext dbContext)
+    public CatalogoController(ILogger<CatalogoController> logger, AppDbContext dbContext, Microsoft.AspNetCore.Identity.UserManager<Portal_Academico.Models.Usuario> userManager)
     {
         _logger = logger;
         _dbContext = dbContext;
+        _userManager = userManager;
     }
 
     public IActionResult Index([FromQuery] CatalogoViewModel filters)
@@ -88,13 +91,58 @@ public class CatalogoController : Controller
     // POST: /Catalogo/Inscribirse/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Inscribirse(int id)
+        public async System.Threading.Tasks.Task<IActionResult> Inscribirse(int id)
     {
         var curso = _dbContext.Cursos.FirstOrDefault(c => c.Id == id && c.Activo == "true");
         if (curso == null) return NotFound();
 
-        // Crear una matrícula simple. Si no hay autenticación, usamos 'demo-user'
-    var userId = User?.Identity?.IsAuthenticated == true ? (User.Identity.Name ?? "demo-user") : "demo-user";
+            // Obtener/crear usuario
+            // El usuario debe estar autenticado para inscribirse
+            if (User?.Identity?.IsAuthenticated != true)
+            {
+                TempData["ErrorMessage"] = "Debes iniciar sesión para inscribirte en un curso.";
+                return RedirectToAction(nameof(Details), new { id = curso.Id });
+            }
+
+            // Intentar obtener el user id desde las claims (NameIdentifier)
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Portal_Academico.Models.Usuario? user = null;
+            if (!string.IsNullOrEmpty(userIdClaim))
+            {
+                user = await _userManager.FindByIdAsync(userIdClaim);
+                _logger.LogDebug("Buscar usuario por Id claim: {UserIdClaim} -> {Found}", userIdClaim, user != null);
+            }
+            if (user == null)
+            {
+                var userName = User.Identity?.Name ?? string.Empty;
+                if (!string.IsNullOrEmpty(userName))
+                {
+                    user = await _userManager.FindByNameAsync(userName);
+                    _logger.LogDebug("Buscar usuario por Name: {UserName} -> {Found}", userName, user != null);
+                }
+            }
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Usuario no encontrado. Inicia sesión nuevamente.";
+                return RedirectToAction(nameof(Details), new { id = curso.Id });
+            }
+            var userId = user.Id;
+
+        // Validación: el usuario no puede estar matriculado más de una vez en el mismo curso (estado distinto de Cancelada)
+            var existe = _dbContext.Matriculas.Any(m => m.CursoId == curso.Id && m.UsuarioId == userId && m.Estado != EstadoMatricula.Cancelada);
+        if (existe)
+        {
+            TempData["ErrorMessage"] = "Ya estás matriculado en este curso.";
+            return RedirectToAction(nameof(Details), new { id = curso.Id });
+        }
+
+        // Validación: no exceder CupoMaximo (contar matrículas activas: Pendiente o Confirmada)
+        var inscritos = _dbContext.Matriculas.Count(m => m.CursoId == curso.Id && m.Estado != EstadoMatricula.Cancelada);
+        if (curso.CupoMaximo > 0 && inscritos >= curso.CupoMaximo)
+        {
+            TempData["ErrorMessage"] = "No es posible inscribirse: cupo máximo alcanzado.";
+            return RedirectToAction(nameof(Details), new { id = curso.Id });
+        }
 
         var matricula = new Matricula
         {
