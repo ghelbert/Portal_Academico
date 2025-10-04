@@ -5,7 +5,7 @@ using Portal_Academico.Models;
 
 namespace Portal_Academico.Data;
 
-public class ApplicationDbContext : IdentityDbContext<Usuario>
+public class ApplicationDbContext : IdentityDbContext<Usuario   >
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
