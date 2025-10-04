@@ -25,7 +25,7 @@ El **Portal Académico** es una plataforma web para gestionar registros académi
 ## Requisitos
 - .NET 9
 - Redis (si aplica)
-- SQL Server o MySQL
+- SQLITE
 
 1. Clona este repositorio:
    ```bash
