@@ -95,7 +95,7 @@ public class CatalogoController : Controller
             // Aplicar filtros si se proporcionan sobre la lista materializada
             var filtered = cursosActivos.AsQueryable();
             if (!string.IsNullOrEmpty(viewModel.NombreFiltro))
-                filtered = filtered.Where(c => c.Nombre.Contains(viewModel.NombreFiltro));
+                filtered = filtered.Where(c => c.Nombre != null && c.Nombre.Contains(viewModel.NombreFiltro));
             if (viewModel.MinCreditos.HasValue)
                 filtered = filtered.Where(c => c.Creditos >= viewModel.MinCreditos.Value);
             if (viewModel.MaxCreditos.HasValue)
@@ -107,12 +107,12 @@ public class CatalogoController : Controller
                 if (viewModel.HorarioInicioFiltro.HasValue)
                 {
                     var inicioFiltro = viewModel.HorarioInicioFiltro.Value;
-                    lista = lista.Where(c => TimeSpan.TryParse(c.HorarioInicio, out var hi) && hi >= inicioFiltro).ToList();
+                    lista = lista.Where(c => c.HorarioInicio != null && TimeSpan.TryParse(c.HorarioInicio, out var hi) && hi >= inicioFiltro).ToList();
                 }
                 if (viewModel.HorarioFinFiltro.HasValue)
                 {
                     var finFiltro = viewModel.HorarioFinFiltro.Value;
-                    lista = lista.Where(c => TimeSpan.TryParse(c.HorarioFin, out var hf) && hf <= finFiltro).ToList();
+                    lista = lista.Where(c => c.HorarioFin != null && TimeSpan.TryParse(c.HorarioFin, out var hf) && hf <= finFiltro).ToList();
                 }
                 viewModel.Cursos = lista;
             }
