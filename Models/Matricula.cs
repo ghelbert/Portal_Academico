@@ -19,7 +19,7 @@ namespace Portal_Academico.Models
         [Required]
         public string UsuarioId { get; set; }
 
-        public DateTime FechaRegistro { get; set; }
+        public string FechaRegistro { get; set; }
 
         [Required]
         public EstadoMatricula Estado { get; set; }

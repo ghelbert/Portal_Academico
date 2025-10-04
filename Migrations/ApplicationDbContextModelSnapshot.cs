@@ -7,7 +7,7 @@ using Portal_Academico.Data;
 
 #nullable disable
 
-namespace Portal_Academico.Data.Migrations
+namespace Portal_Academico.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
@@ -16,6 +16,32 @@ namespace Portal_Academico.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
@@ -129,8 +155,9 @@ namespace Portal_Academico.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("Activo")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Activo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Codigo")
                         .IsRequired()
@@ -143,10 +170,12 @@ namespace Portal_Academico.Data.Migrations
                     b.Property<int>("CupoMaximo")
                         .HasColumnType("INTEGER");
 
-                    b.Property<TimeSpan>("HorarioFin")
+                    b.Property<string>("HorarioFin")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<TimeSpan>("HorarioInicio")
+                    b.Property<string>("HorarioInicio")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Nombre")
@@ -157,6 +186,41 @@ namespace Portal_Academico.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Cursos");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Activo = "true",
+                            Codigo = "MATH101",
+                            Creditos = 4,
+                            CupoMaximo = 30,
+                            HorarioFin = "12:00",
+                            HorarioInicio = "10:00",
+                            Nombre = "Matematica"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Activo = "true",
+                            Codigo = "PHYS101",
+                            Creditos = 3,
+                            CupoMaximo = 25,
+                            HorarioFin = "13:00",
+                            HorarioInicio = "11:00",
+                            Nombre = "Fisica"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Activo = "true",
+                            Codigo = "CHEM101",
+                            Creditos = 5,
+                            CupoMaximo = 20,
+                            HorarioFin = "14:00",
+                            HorarioInicio = "12:00",
+                            Nombre = "Quimica"
+                        });
                 });
 
             modelBuilder.Entity("Portal_Academico.Models.Matricula", b =>
@@ -171,7 +235,8 @@ namespace Portal_Academico.Data.Migrations
                     b.Property<int>("Estado")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("FechaRegistro")
+                    b.Property<string>("FechaRegistro")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("UsuarioId")
@@ -185,32 +250,6 @@ namespace Portal_Academico.Data.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("Matriculas");
-                });
-
-            modelBuilder.Entity("Portal_Academico.Models.Rol", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex");
-
-                    b.ToTable("AspNetRoles", (string)null);
                 });
 
             modelBuilder.Entity("Portal_Academico.Models.Usuario", b =>
@@ -255,6 +294,10 @@ namespace Portal_Academico.Data.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Rol")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("TEXT");
 
@@ -279,7 +322,7 @@ namespace Portal_Academico.Data.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
-                    b.HasOne("Portal_Academico.Models.Rol", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -306,7 +349,7 @@ namespace Portal_Academico.Data.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
-                    b.HasOne("Portal_Academico.Models.Rol", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)

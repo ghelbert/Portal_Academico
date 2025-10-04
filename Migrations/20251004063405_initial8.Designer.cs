@@ -8,11 +8,11 @@ using Portal_Academico.Data;
 
 #nullable disable
 
-namespace Portal_Academico.Data.Migrations
+namespace Portal_Academico.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251004021014_initial")]
-    partial class initial
+    [Migration("20251004063405_initial8")]
+    partial class initial8
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -132,8 +132,9 @@ namespace Portal_Academico.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("Activo")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Activo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Codigo")
                         .IsRequired()
@@ -146,10 +147,12 @@ namespace Portal_Academico.Data.Migrations
                     b.Property<int>("CupoMaximo")
                         .HasColumnType("INTEGER");
 
-                    b.Property<TimeSpan>("HorarioFin")
+                    b.Property<string>("HorarioFin")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<TimeSpan>("HorarioInicio")
+                    b.Property<string>("HorarioInicio")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Nombre")
@@ -160,6 +163,41 @@ namespace Portal_Academico.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Cursos");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Activo = "true",
+                            Codigo = "MATH101",
+                            Creditos = 4,
+                            CupoMaximo = 30,
+                            HorarioFin = "12:00",
+                            HorarioInicio = "10:00",
+                            Nombre = "Matematica"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Activo = "true",
+                            Codigo = "PHYS101",
+                            Creditos = 3,
+                            CupoMaximo = 25,
+                            HorarioFin = "13:00",
+                            HorarioInicio = "11:00",
+                            Nombre = "Fisica"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Activo = "true",
+                            Codigo = "CHEM101",
+                            Creditos = 5,
+                            CupoMaximo = 20,
+                            HorarioFin = "14:00",
+                            HorarioInicio = "12:00",
+                            Nombre = "Quimica"
+                        });
                 });
 
             modelBuilder.Entity("Portal_Academico.Models.Matricula", b =>
@@ -174,7 +212,8 @@ namespace Portal_Academico.Data.Migrations
                     b.Property<int>("Estado")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("FechaRegistro")
+                    b.Property<string>("FechaRegistro")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("UsuarioId")
@@ -278,6 +317,22 @@ namespace Portal_Academico.Data.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "474c2488-04cc-49d5-a1a4-2153f7afd1d7",
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "4ac3875b-f635-4da0-8f3b-c0f50a98ad4d",
+                            Email = "gustavo@hotmail.com",
+                            EmailConfirmed = false,
+                            LockoutEnabled = false,
+                            PasswordHash = "AQAAAAIAAYagAAAAEI1iLNqYRKIucp2iFANzzKZB1hZiJnP+QFOYZKf7B4JXoYHw7D0/rt7gugrKvG1foQ==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "35fe78b2-4c3a-490a-9462-c5998c8cfe42",
+                            TwoFactorEnabled = false,
+                            UserName = "Gustavo Reinoso"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

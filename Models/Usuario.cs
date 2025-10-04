@@ -8,6 +8,7 @@ namespace Portal_Academico.Models
 {
     public class Usuario : IdentityUser
     {
+        public string Rol { get; set; }
         public ICollection<Matricula> Matriculas { get; set; }
     }
 }

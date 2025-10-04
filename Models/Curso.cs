@@ -9,13 +9,13 @@ namespace Portal_Academico.Models
 {
     public class Curso
     {
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
         [Required]
         [MaxLength(10)]
-        public string Codigo { get; set; }  // Único
+        public string Codigo { get; set; }
 
         [Required]
         [MaxLength(100)]
@@ -27,13 +27,16 @@ namespace Portal_Academico.Models
         [Range(1, 1000)]
         public int CupoMaximo { get; set; }
 
-        public TimeSpan HorarioInicio { get; set; }
+        public string HorarioInicio { get; set; }
 
-        public TimeSpan HorarioFin { get; set; }
+        public string HorarioFin { get; set; }
 
-        public bool Activo { get; set; }
+        public string Activo { get; set; }
 
-        // Relaciones
         public ICollection<Matricula> Matriculas { get; set; }
+
+       
+
     }
-}
+
+    }
