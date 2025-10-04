@@ -15,6 +15,12 @@
     <div class="alert alert-success">@TempData["SuccessMessage"]</div>
 }
 
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+@* El botón se muestra siempre; la validación server-side evitará duplicados y cupo excedido. *@
 <form asp-controller="Catalogo" asp-action="Inscribirse" method="post">
     <input type="hidden" name="id" value="@Model.Id" />
     <button type="submit" class="btn btn-primary">Inscribirse</button>
