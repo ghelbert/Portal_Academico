@@ -7,12 +7,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<Usuario>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+    .AddEntityFrameworkStores<AppDbContext>();
 
 builder.Services.AddControllersWithViews();
 
@@ -32,7 +32,7 @@ else
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var db = services.GetRequiredService<ApplicationDbContext>();
+    var db = services.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
     var userManager = services.GetRequiredService<UserManager<Usuario>>();
     await SeedData.Initialize(services, userManager);

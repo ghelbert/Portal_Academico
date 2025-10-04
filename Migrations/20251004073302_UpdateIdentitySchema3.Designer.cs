@@ -10,7 +10,7 @@ using Portal_Academico.Data;
 
 namespace Portal_Academico.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
+    [DbContext(typeof(AppDbContext))]
     [Migration("20251004073302_UpdateIdentitySchema3")]
     partial class UpdateIdentitySchema3
     {
