@@ -2,14 +2,58 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Portal_Academico.Data;
 using Portal_Academico.Models;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(connectionString));
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+try
+{
+    var redisHost = builder.Configuration["Redis:Host"];
+    var redisPort = builder.Configuration.GetValue<int>("Redis:Port");
+    var redisUser = builder.Configuration["Redis:User"];
+    var redisPassword = builder.Configuration["Redis:Password"];
+
+    var configurationOptions = new ConfigurationOptions
+    {
+        EndPoints = { { redisHost!, redisPort } },
+        User = redisUser,
+        Password = redisPassword,
+        Ssl = false,
+        AbortOnConnectFail = false, // No fallar si Redis no está disponible
+        ConnectTimeout = 5000
+    };
+
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.ConfigurationOptions = configurationOptions;
+    });
+
+    builder.Services.AddSingleton<IConnectionMultiplexer>(provider =>
+        ConnectionMultiplexer.Connect(configurationOptions));
+}
+catch (Exception ex)
+{
+    // Si hay error con Redis, usar cache en memoria como fallback
+    builder.Services.AddMemoryCache();
+    Console.WriteLine($"Redis no disponible, usando cache en memoria: {ex.Message}");
+}
+
+builder.Services.Configure<RedisConfiguration>(builder.Configuration.GetSection("Redis"));
+
+builder.Services.AddSession(options =>
+{
+    options.Cookie.Name = ".AppTrade.Session";
+    options.IdleTimeout = TimeSpan.FromMinutes(20);
+    options.Cookie.IsEssential = true;
+});
 
 builder.Services.AddDefaultIdentity<Usuario>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<AppDbContext>();
@@ -40,7 +84,10 @@ using (var scope = app.Services.CreateScope())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseSession();
 
 app.MapStaticAssets();
 
@@ -53,3 +100,7 @@ app.MapRazorPages()
    .WithStaticAssets();
 
 app.Run();
+
+internal class RedisConfiguration
+{
+}
