@@ -22,7 +22,6 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
-wwwroot/
 # .NET Core
 project.lock.json
 project.fragment.lock.json
