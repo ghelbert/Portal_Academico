@@ -16,17 +16,17 @@ namespace Portal_Academico.Models
         [Required]
         public int CursoId { get; set; }
 
-        [Required]
-        public string UsuarioId { get; set; }
+    [Required]
+    public string? UsuarioId { get; set; }
 
-        public string FechaRegistro { get; set; }
+    public string? FechaRegistro { get; set; }
 
         [Required]
         public EstadoMatricula Estado { get; set; }
 
-        // Relaciones
-        public Curso Curso { get; set; }
-        public Usuario Usuario { get; set; }
+    // Relaciones
+    public Curso? Curso { get; set; }
+    public Usuario? Usuario { get; set; }
     }
 
     public enum EstadoMatricula

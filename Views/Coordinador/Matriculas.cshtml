@@ -1,0 +1,39 @@
+@model IEnumerable<Portal_Academico.Models.Matricula>
+
+<h1>Matriculas del Curso</h1>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Usuario</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var m in Model)
+        {
+            <tr>
+                <td>@m.UsuarioId</td>
+                <td>@m.FechaRegistro</td>
+                <td>@m.Estado</td>
+                <td>
+                    @if (m.Estado == Portal_Academico.Models.EstadoMatricula.Pendiente)
+                    {
+                        <form asp-action="Confirmar" method="post" style="display:inline-block;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@m.Id" />
+                            <button class="btn btn-sm btn-success">Confirmar</button>
+                        </form>
+                        <form asp-action="Cancelar" method="post" style="display:inline-block; margin-left:6px;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@m.Id" />
+                            <button class="btn btn-sm btn-danger">Cancelar</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
