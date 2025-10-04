@@ -1,0 +1,41 @@
+@model IEnumerable<Portal_Academico.Models.Curso>
+
+<h1>Panel de Coordinador - Cursos</h1>
+
+<a asp-action="Create" class="btn btn-primary mb-3">Crear curso</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Créditos</th>
+            <th>Cupo</th>
+            <th>Horario</th>
+            <th>Activo</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var c in Model)
+        {
+            <tr>
+                <td>@c.Codigo</td>
+                <td>@c.Nombre</td>
+                <td>@c.Creditos</td>
+                <td>@c.CupoMaximo</td>
+                <td>@c.HorarioInicio - @c.HorarioFin</td>
+                <td>@c.Activo</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-sm btn-secondary">Editar</a>
+                    <form asp-action="ToggleActive" method="post" style="display:inline-block; margin-left:6px;">
+                        <input type="hidden" name="id" value="@c.Id" />
+                        <button class="btn btn-sm btn-warning">Toggle</button>
+                        @Html.AntiForgeryToken()
+                    </form>
+                    <a asp-action="Matriculas" asp-route-id="@c.Id" class="btn btn-sm btn-info" style="margin-left:6px;">Matriculas</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

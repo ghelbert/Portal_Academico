@@ -1,0 +1,40 @@
+@model Portal_Academico.Models.Curso
+
+<h1>Crear Curso</h1>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    @if (TempData["FormErrors"] != null)
+    {
+        <div class="alert alert-danger">@TempData["FormErrors"]</div>
+    }
+    <div class="form-group">
+        <label asp-for="Codigo"></label>
+        <input asp-for="Codigo" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="Nombre"></label>
+        <input asp-for="Nombre" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="Creditos"></label>
+        <input asp-for="Creditos" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="CupoMaximo"></label>
+        <input asp-for="CupoMaximo" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="HorarioInicio"></label>
+        <input asp-for="HorarioInicio" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="HorarioFin"></label>
+        <input asp-for="HorarioFin" class="form-control" />
+    </div>
+    <div class="form-group form-check">
+        <input asp-for="Activo" type="checkbox" class="form-check-input" value="true" />
+        <label asp-for="Activo" class="form-check-label"></label>
+    </div>
+    <button class="btn btn-primary">Crear</button>
+</form>
