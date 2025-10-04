@@ -27,7 +27,17 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Catalogo" asp-action="Index">Catalogo</a>
                         </li>
                     </ul>
-                    <partial name="_LoginPartial" />
+                    <div class="d-flex align-items-center">
+                        @{
+                            var ultimoId = Context.Session.GetString("UltimoCursoId");
+                            var ultimoNombre = Context.Session.GetString("UltimoCursoNombre");
+                        }
+                        @if (!string.IsNullOrEmpty(ultimoId) && !string.IsNullOrEmpty(ultimoNombre))
+                        {
+                            <a class="me-3" asp-controller="Catalogo" asp-action="Details" asp-route-id="@ultimoId">Volver al curso @ultimoNombre</a>
+                        }
+                        <partial name="_LoginPartial" />
+                    </div>
                 </div>
             </div>
         </nav>

@@ -12,19 +12,21 @@ public class CatalogoController : Controller
 
     private readonly AppDbContext _dbContext; // Contexto de la base de datos
     private readonly Microsoft.AspNetCore.Identity.UserManager<Portal_Academico.Models.Usuario> _userManager;
+    private readonly Microsoft.Extensions.Caching.Distributed.IDistributedCache _cache;
 
-    public CatalogoController(ILogger<CatalogoController> logger, AppDbContext dbContext, Microsoft.AspNetCore.Identity.UserManager<Portal_Academico.Models.Usuario> userManager)
+    public CatalogoController(ILogger<CatalogoController> logger, AppDbContext dbContext, Microsoft.AspNetCore.Identity.UserManager<Portal_Academico.Models.Usuario> userManager, Microsoft.Extensions.Caching.Distributed.IDistributedCache cache)
     {
         _logger = logger;
         _dbContext = dbContext;
         _userManager = userManager;
+        _cache = cache;
     }
 
     public IActionResult Index([FromQuery] CatalogoViewModel filters)
     {
         var viewModel = filters ?? new CatalogoViewModel();
 
-        try
+    try
         {
             // Validaciones server-side
             if (viewModel.MinCreditos.HasValue && viewModel.MinCreditos < 0)
@@ -37,23 +39,71 @@ public class CatalogoController : Controller
                 && viewModel.HorarioFinFiltro < viewModel.HorarioInicioFiltro)
                 ModelState.AddModelError(string.Empty, "Horario Fin no puede ser anterior a Horario Inicio.");
 
-            // Iniciar consulta desde la base de datos y sólo cursos activos
-            var query = _dbContext.Cursos.AsQueryable();
-            query = query.Where(c => c.Activo == "true");
+            // Usar cache distribuida para el listado de cursos activos (60s)
+            var cacheKey = "catalogo:cursos:activos";
+            List<Curso> cursosActivos;
+            try
+            {
+                var cachedBytes = _cache.GetAsync(cacheKey).GetAwaiter().GetResult();
+                if (cachedBytes != null && cachedBytes.Length > 0)
+                {
+                    var json = System.Text.Encoding.UTF8.GetString(cachedBytes);
+                    var cachedDto = System.Text.Json.JsonSerializer.Deserialize<List<CursoCacheDto>>(json) ?? new List<CursoCacheDto>();
+                    // Reconstruir entidades Curso ligeras para la vista (no trackeadas)
+                    cursosActivos = cachedDto.Select(d => new Curso
+                    {
+                        Id = d.Id,
+                        Codigo = d.Codigo,
+                        Nombre = d.Nombre,
+                        Creditos = d.Creditos,
+                        CupoMaximo = d.CupoMaximo,
+                        HorarioInicio = d.HorarioInicio,
+                        HorarioFin = d.HorarioFin,
+                        Activo = "true"
+                    }).ToList();
+                }
+                else
+                {
+                    var query = _dbContext.Cursos.Where(c => c.Activo == "true");
+                    cursosActivos = query.ToList();
+                    var dto = cursosActivos.Select(c => new CursoCacheDto
+                    {
+                        Id = c.Id,
+                        Codigo = c.Codigo,
+                        Nombre = c.Nombre,
+                        Creditos = c.Creditos,
+                        CupoMaximo = c.CupoMaximo,
+                        HorarioInicio = c.HorarioInicio,
+                        HorarioFin = c.HorarioFin
+                    }).ToList();
+                    var json = System.Text.Json.JsonSerializer.Serialize(dto);
+                    var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+                    var options = new Microsoft.Extensions.Caching.Distributed.DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60)
+                    };
+                    _cache.SetAsync(cacheKey, bytes, options).GetAwaiter().GetResult();
+                }
+            }
+            catch (Exception exCache)
+            {
+                _logger.LogWarning(exCache, "No se pudo usar la cache distribuida, se procederá a consultar la BD.");
+                var query = _dbContext.Cursos.Where(c => c.Activo == "true");
+                cursosActivos = query.ToList();
+            }
 
-            // Aplicar filtros si se proporcionan
+            // Aplicar filtros si se proporcionan sobre la lista materializada
+            var filtered = cursosActivos.AsQueryable();
             if (!string.IsNullOrEmpty(viewModel.NombreFiltro))
-                query = query.Where(c => c.Nombre.Contains(viewModel.NombreFiltro));
+                filtered = filtered.Where(c => c.Nombre.Contains(viewModel.NombreFiltro));
             if (viewModel.MinCreditos.HasValue)
-                query = query.Where(c => c.Creditos >= viewModel.MinCreditos.Value);
+                filtered = filtered.Where(c => c.Creditos >= viewModel.MinCreditos.Value);
             if (viewModel.MaxCreditos.HasValue)
-                query = query.Where(c => c.Creditos <= viewModel.MaxCreditos.Value);
+                filtered = filtered.Where(c => c.Creditos <= viewModel.MaxCreditos.Value);
 
-            // Horarios en la entidad están como strings "HH:mm"; EF no puede traducir TryParse,
-            // así que si hay filtros de horario, materializamos la consulta y aplicamos el filtrado en memoria.
             if (viewModel.HorarioInicioFiltro.HasValue || viewModel.HorarioFinFiltro.HasValue)
             {
-                var lista = query.ToList();
+                var lista = filtered.ToList();
                 if (viewModel.HorarioInicioFiltro.HasValue)
                 {
                     var inicioFiltro = viewModel.HorarioInicioFiltro.Value;
@@ -68,8 +118,7 @@ public class CatalogoController : Controller
             }
             else
             {
-                // No hay filtros de horario -> ejecutar en BD
-                viewModel.Cursos = query.ToList();
+                viewModel.Cursos = filtered.ToList();
             }
         }
         catch (Exception ex)
@@ -85,6 +134,16 @@ public class CatalogoController : Controller
     {
         var curso = _dbContext.Cursos.FirstOrDefault(c => c.Id == id && c.Activo == "true");
         if (curso == null) return NotFound();
+        // Guardar en sesión el último curso visitado (id y nombre)
+        try
+        {
+            HttpContext.Session.SetString("UltimoCursoId", curso.Id.ToString());
+            HttpContext.Session.SetString("UltimoCursoNombre", curso.Nombre ?? string.Empty);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "No se pudo almacenar sesión de último curso");
+        }
         return View(curso);
     }
 
