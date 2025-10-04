@@ -144,6 +144,51 @@ public class CatalogoController : Controller
             return RedirectToAction(nameof(Details), new { id = curso.Id });
         }
 
+        // Validación adicional: evitar solapamiento de horarios con otros cursos en los que el usuario ya está matriculado (Pendiente o Confirmada)
+        try
+        {
+            var matr = _dbContext.Matriculas
+                .Where(m => m.UsuarioId == userId && m.Estado != EstadoMatricula.Cancelada)
+                .Select(m => m.Curso)
+                .ToList();
+
+            if (matr != null && matr.Any())
+            {
+                TimeSpan curStart, curEnd;
+                var parseStart = TimeSpan.TryParse(curso.HorarioInicio, out curStart);
+                var parseEnd = TimeSpan.TryParse(curso.HorarioFin, out curEnd);
+                bool parseCur = parseStart && parseEnd;
+                if (parseCur)
+                {
+                    foreach (var other in matr)
+                    {
+                        if (other == null) continue;
+                        if (other.Id == curso.Id) continue; // mismo curso ya cubierto
+                        if (!TimeSpan.TryParse(other.HorarioInicio, out var oStart) || !TimeSpan.TryParse(other.HorarioFin, out var oEnd))
+                        {
+                            _logger.LogDebug("No se pudo parsear horario de curso {CursoId}", other.Id);
+                            continue;
+                        }
+                        // Comprobar intersección estricta: start1 < end2 && start2 < end1
+                        if (curStart < oEnd && oStart < curEnd)
+                        {
+                            TempData["ErrorMessage"] = "No puedes inscribirte: el horario se solapa con otro curso en el que estás matriculado.";
+                            return RedirectToAction(nameof(Details), new { id = curso.Id });
+                        }
+                    }
+                }
+                else
+                {
+                    _logger.LogDebug("No se pudo parsear horario del curso actual Id={CursoId}", curso.Id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al validar solapamiento de horarios para usuario {UserId} y curso {CursoId}", userId, curso.Id);
+            // No bloquear inscripción por error de validación de horario; mejor permitir y registrar
+        }
+
         var matricula = new Matricula
         {
             CursoId = curso.Id,
