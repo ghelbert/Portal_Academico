@@ -1,0 +1,82 @@
+@model Portal_Academico.Models.CatalogoViewModel
+
+<h1>Catálogo de Cursos Activos</h1>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<form method="get" class="mb-4">
+    <div class="row">
+        <div class="col-md-3">
+            <label asp-for="NombreFiltro">Nombre</label>
+            <input asp-for="NombreFiltro" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label asp-for="MinCreditos">Créditos Mín.</label>
+            <input asp-for="MinCreditos" type="number" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label asp-for="MaxCreditos">Créditos Máx.</label>
+            <input asp-for="MaxCreditos" type="number" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label asp-for="HorarioInicioFiltro">Horario Inicio</label>
+            <input asp-for="HorarioInicioFiltro" type="time" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label asp-for="HorarioFinFiltro">Horario Fin</label>
+            <input asp-for="HorarioFinFiltro" type="time" class="form-control" />
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+        </div>
+    </div>
+    @* Los helpers mantendrán los valores en la querystring *@
+</form>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Créditos</th>
+            <th>Cupo Máximo</th>
+            <th>Horario</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var curso in Model.Cursos)
+        {
+            <tr>
+                <td>@curso.Codigo</td>
+                <td>@curso.Nombre</td>
+                <td>@curso.Creditos</td>
+                <td>@curso.CupoMaximo</td>
+                <td>@curso.HorarioInicio - @curso.HorarioFin</td>
+                <td>
+                    <a asp-controller="Catalogo" asp-action="Details" asp-route-id="@curso.Id">Detalles</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Cursos.Any())
+{
+    <p>No hay cursos activos que coincidan con los filtros.</p>
+}
